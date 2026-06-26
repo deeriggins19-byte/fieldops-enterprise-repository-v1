@@ -1,6 +1,7 @@
 # AWS Bootstrap Commands
 
 Use these commands to provision the minimum AWS resources for the ECS deploy workflow.
+If you prefer a single-stack option, use [infra/aws/cloudformation/bootstrap.yml](../infra/aws/cloudformation/bootstrap.yml) instead of the command-by-command steps below.
 
 Replace the placeholders before running.
 
