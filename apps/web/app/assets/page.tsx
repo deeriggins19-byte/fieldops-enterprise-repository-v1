@@ -6,15 +6,18 @@ import {api} from '../../lib/api';
 
 export default function Page(){
   const[rows,setRows]=useState<any[]>([]);
-  const[value,setValue]=useState('PNL-001');
+  const[code,setCode]=useState('PNL-001');
+  const[name,setName]=useState('Main Panel');
+  const[category,setCategory]=useState('General');
+  const[projectId,setProjectId]=useState('');
 
   async function load(){try{setRows(await api('/assets'))}catch{setRows([])}}
   async function create(){
-    const body:any={name:value,title:value,code:value,sku:value,category:'General',priority:'NORMAL',quantity:0};
+    const body:any={code,name,category,projectId};
     await api('/assets',{method:'POST',body:JSON.stringify(body)});
     await load();
   }
 
   useEffect(()=>{load()},[]);
-  return <AppShell><h1>Assets</h1><div className='card'><input className='input' value={value} onChange={e=>setValue(e.target.value)}/><button className='btn' onClick={create}>Create</button></div><RecordList title='Assets' rows={rows}/></AppShell>
+  return <AppShell><h1>Assets</h1><div className='card'><input className='input' value={code} onChange={e=>setCode(e.target.value)} placeholder='Asset code'/><input className='input' value={name} onChange={e=>setName(e.target.value)} placeholder='Asset name'/><input className='input' value={category} onChange={e=>setCategory(e.target.value)} placeholder='Category'/><input className='input' value={projectId} onChange={e=>setProjectId(e.target.value)} placeholder='Project ID (optional)'/><button className='btn' onClick={create}>Create</button></div><RecordList title='Assets' rows={rows}/></AppShell>
 }
