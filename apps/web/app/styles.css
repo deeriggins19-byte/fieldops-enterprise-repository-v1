@@ -236,13 +236,7 @@ main {
 	color: #64748b;
 }
 
-#google_translate_element .goog-te-gadget {
-	font-family: inherit;
-	font-size: 0;
-	color: transparent;
-}
-
-#google_translate_element .goog-te-combo {
+.language-select {
 	height: 34px;
 	border: 1px solid #c7deed;
 	border-radius: 10px;
@@ -252,6 +246,12 @@ main {
 	color: #0f2342;
 	background: #f5faff;
 	max-width: 190px;
+}
+
+.language-select:focus {
+	outline: none;
+	border-color: #38bdf8;
+	box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
 }
 
 .user-menu-trigger {

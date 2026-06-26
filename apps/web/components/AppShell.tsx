@@ -3,25 +3,27 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from './I18nProvider';
 import { LanguageSwitcher } from './LanguageSwitcher';
 const nav = [
-	{ label: 'Marketing', href: '/marketing' },
-	{ label: 'Buy', href: '/buy' },
-	{ label: 'Purchases', href: '/purchases' },
-	{ label: 'Dashboard', href: '/dashboard' },
-	{ label: 'Projects', href: '/projects' },
-	{ label: 'Meetings', href: '/meetings' },
-	{ label: 'Assets', href: '/assets' },
-	{ label: 'Scan In', href: '/scan-in' },
-	{ label: 'Work Orders', href: '/work-orders' },
-	{ label: 'Training', href: '/training' },
-	{ label: 'Inventory', href: '/inventory' },
-	{ label: 'Forecasting', href: '/forecasting' },
-	{ label: 'Amara', href: '/amara' },
-	{ label: 'Customer Portal', href: '/customer-portal' }
+	{ labelKey: 'nav.marketing', href: '/marketing' },
+	{ labelKey: 'nav.buy', href: '/buy' },
+	{ labelKey: 'nav.purchases', href: '/purchases' },
+	{ labelKey: 'nav.dashboard', href: '/dashboard' },
+	{ labelKey: 'nav.projects', href: '/projects' },
+	{ labelKey: 'nav.meetings', href: '/meetings' },
+	{ labelKey: 'nav.assets', href: '/assets' },
+	{ labelKey: 'nav.scanIn', href: '/scan-in' },
+	{ labelKey: 'nav.workOrders', href: '/work-orders' },
+	{ labelKey: 'nav.training', href: '/training' },
+	{ labelKey: 'nav.inventory', href: '/inventory' },
+	{ labelKey: 'nav.forecasting', href: '/forecasting' },
+	{ labelKey: 'nav.amara', href: '/amara' },
+	{ labelKey: 'nav.customerPortal', href: '/customer-portal' }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+	const { locale, t } = useI18n();
 	const pathname = usePathname();
 	const router = useRouter();
 	const [timestamp, setTimestamp] = useState('');
@@ -31,8 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	const searchRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		setTimestamp(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-	}, []);
+		setTimestamp(new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }));
+	}, [locale]);
 
 	useEffect(() => {
 		function onDocumentClick(event: MouseEvent) {
@@ -52,7 +54,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	const searchResults = searchTerm.trim()
 		? nav.filter((item) => {
 				const q = searchTerm.toLowerCase();
-				return item.label.toLowerCase().includes(q) || item.href.toLowerCase().includes(q);
+				const label = t(item.labelKey).toLowerCase();
+				return label.includes(q) || item.href.toLowerCase().includes(q);
 		  })
 		: [];
 
@@ -66,14 +69,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 		<div className='shell'>
 			<aside className='side'>
 				<div className='brand'>
-					<p className='brand-kicker'>Field Service OS</p>
+					<p className='brand-kicker'>{t('brand.kicker')}</p>
 					<h2>FieldOps</h2>
-					<p className='brand-copy'>Operational control for teams in motion.</p>
+					<p className='brand-copy'>{t('brand.copy')}</p>
 				</div>
 				<nav className='nav'>
 					{nav.map((item) => (
 						<Link className={`nav-link ${pathname === item.href ? 'is-active' : ''}`} key={item.href} href={item.href}>
-							{item.label}
+							{t(item.labelKey)}
 						</Link>
 					))}
 				</nav>
@@ -82,14 +85,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				<div className='status-rail card'>
 					<div className='status-item'>
 						<span className='status-dot status-live' />
-						Live Ops
+						{t('status.live')}
 					</div>
-					<div className='status-item'>Route: {pathname}</div>
-					<div className='status-item'>Updated {timestamp || '--:--'}</div>
+					<div className='status-item'>
+						{t('status.route')}: {pathname}
+					</div>
+					<div className='status-item'>
+						{t('status.updated')} {timestamp || '--:--'}
+					</div>
 					<div className='shell-search' ref={searchRef}>
 						<input
 							className='shell-search-input'
-							placeholder='Search pages...'
+							placeholder={t('search.placeholder')}
 							onChange={(event) => setSearchTerm(event.target.value)}
 							onKeyDown={(event) => {
 								if (event.key === 'Enter') goToFirstMatch();
@@ -108,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 										type='button'
 										key={item.href}
 									>
-										<span>{item.label}</span>
+										<span>{t(item.labelKey)}</span>
 										<small>{item.href}</small>
 									</button>
 								))}
@@ -121,19 +128,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 					<div className='user-menu' ref={menuRef}>
 						<button className='user-menu-trigger' onClick={() => setMenuOpen((v) => !v)} type='button'>
 							<span className='user-menu-avatar'>FO</span>
-							Commander
+							{t('user.commander')}
 							<span className={`user-menu-arrow ${menuOpen ? 'open' : ''}`}>▾</span>
 						</button>
 						{menuOpen && (
 							<div className='user-menu-panel'>
 								<button className='user-menu-item' type='button' onClick={() => setMenuOpen(false)}>
-									Profile
+									{t('user.profile')}
 								</button>
 								<button className='user-menu-item' type='button' onClick={() => setMenuOpen(false)}>
-									Preferences
+									{t('user.preferences')}
 								</button>
 								<button className='user-menu-item user-menu-item-warn' type='button' onClick={() => setMenuOpen(false)}>
-									Sign out
+									{t('user.signout')}
 								</button>
 							</div>
 						)}

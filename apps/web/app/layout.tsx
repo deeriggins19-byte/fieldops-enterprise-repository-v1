@@ -1,5 +1,6 @@
 import { Manrope, Space_Grotesk } from 'next/font/google';
 import './styles.css';
+import { I18nProvider } from '../components/I18nProvider';
 
 const manrope = Manrope({
 	subsets: ['latin'],
@@ -14,7 +15,9 @@ const spaceGrotesk = Space_Grotesk({
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang='en'>
-			<body className={`${manrope.variable} ${spaceGrotesk.variable}`}>{children}</body>
+			<body className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+				<I18nProvider>{children}</I18nProvider>
+			</body>
 		</html>
 	);
 }

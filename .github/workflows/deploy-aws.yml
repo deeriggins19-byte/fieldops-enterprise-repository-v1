@@ -33,12 +33,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -48,7 +48,7 @@ jobs:
         run: npm run build
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
@@ -139,6 +139,29 @@ jobs:
       - name: Update Web service
         run: |
           aws ecs update-service --cluster "$AWS_ECS_CLUSTER" --service "$AWS_ECS_WEB_SERVICE" --task-definition "${{ steps.web-task.outputs.task_arn }}" --force-new-deployment
+
+      - name: Wait for ECS services to stabilize
+        run: |
+          aws ecs wait services-stable --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_API_SERVICE" "$AWS_ECS_WEB_SERVICE"
+
+      - name: Smoke check service counts
+        run: |
+          API_DESIRED=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_API_SERVICE" --query 'services[0].desiredCount' --output text)
+          API_RUNNING=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_API_SERVICE" --query 'services[0].runningCount' --output text)
+          WEB_DESIRED=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_WEB_SERVICE" --query 'services[0].desiredCount' --output text)
+          WEB_RUNNING=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_WEB_SERVICE" --query 'services[0].runningCount' --output text)
+
+          [ "$API_RUNNING" -ge "$API_DESIRED" ] || (echo "API running task count is below desired" && exit 1)
+          [ "$WEB_RUNNING" -ge "$WEB_DESIRED" ] || (echo "Web running task count is below desired" && exit 1)
+
+      - name: Smoke check API startup log
+        run: |
+          API_STREAM=$(aws logs describe-log-streams --log-group-name /fieldops/api --order-by LastEventTime --descending --max-items 1 --query 'logStreams[0].logStreamName' --output text)
+          [ -n "$API_STREAM" ] && [ "$API_STREAM" != "None" ] || (echo "No API log stream found" && exit 1)
+
+          START_MS=$((($(date +%s) - 1200) * 1000))
+          STARTED_COUNT=$(aws logs filter-log-events --log-group-name /fieldops/api --log-stream-names "$API_STREAM" --start-time "$START_MS" --filter-pattern '"Nest application successfully started"' --query 'length(events)' --output text)
+          [ "$STARTED_COUNT" -ge 1 ] || (echo "API startup marker not found in recent logs" && exit 1)
 
       - name: Validate AWS caller identity
         run: aws sts get-caller-identity
