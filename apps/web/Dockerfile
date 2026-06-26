@@ -13,6 +13,7 @@ RUN npm ci
 FROM deps AS build
 COPY . .
 RUN npm --workspace @fieldops/web run build
+RUN mkdir -p /repo/apps/web/public
 
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
