@@ -25,6 +25,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
       - name: Start API
         run: |
           npm run dev:api > /tmp/fieldops-api.log 2>&1 &
