@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS base
+FROM node:20-bullseye-slim AS base
 WORKDIR /repo
 ENV CI=1
 
@@ -15,7 +15,7 @@ COPY . .
 RUN npm --workspace @fieldops/api run build
 RUN npm --workspace @fieldops/api run prisma:generate
 
-FROM node:20-bookworm-slim AS runtime
+FROM node:20-bullseye-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /repo/node_modules ./node_modules
