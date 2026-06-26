@@ -112,6 +112,26 @@ jobs:
           WEB_TASK_ARN=$(aws ecs register-task-definition --cli-input-json file:///tmp/web-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
           echo "task_arn=$WEB_TASK_ARN" >> "$GITHUB_OUTPUT"
 
+      - name: Ensure API service exists
+        run: |
+          STATUS=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_API_SERVICE" --query 'services[0].status' --output text || true)
+          if [ "$STATUS" = "None" ] || [ "$STATUS" = "INACTIVE" ] || [ -z "$STATUS" ]; then
+            VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
+            SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
+            SG_ID=$(aws ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC_ID" Name=group-name,Values=default --query 'SecurityGroups[0].GroupId' --output text)
+            aws ecs create-service --cluster "$AWS_ECS_CLUSTER" --service-name "$AWS_ECS_API_SERVICE" --task-definition "${{ steps.api-task.outputs.task_arn }}" --desired-count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+          fi
+
+      - name: Ensure Web service exists
+        run: |
+          STATUS=$(aws ecs describe-services --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_WEB_SERVICE" --query 'services[0].status' --output text || true)
+          if [ "$STATUS" = "None" ] || [ "$STATUS" = "INACTIVE" ] || [ -z "$STATUS" ]; then
+            VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
+            SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
+            SG_ID=$(aws ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC_ID" Name=group-name,Values=default --query 'SecurityGroups[0].GroupId' --output text)
+            aws ecs create-service --cluster "$AWS_ECS_CLUSTER" --service-name "$AWS_ECS_WEB_SERVICE" --task-definition "${{ steps.web-task.outputs.task_arn }}" --desired-count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+          fi
+
       - name: Update API service
         run: |
           aws ecs update-service --cluster "$AWS_ECS_CLUSTER" --service "$AWS_ECS_API_SERVICE" --task-definition "${{ steps.api-task.outputs.task_arn }}" --force-new-deployment
