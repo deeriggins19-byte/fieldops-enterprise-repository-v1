@@ -1,0 +1,35 @@
+{
+  "family": "fieldops-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<ECS_EXECUTION_ROLE>",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<ECS_TASK_ROLE>",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/<AWS_ECR_WEB_REPOSITORY>:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NEXT_PUBLIC_API_URL", "value": "https://<API_DOMAIN>" },
+        { "name": "EXPO_PUBLIC_API_URL", "value": "https://<API_DOMAIN>" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/fieldops/web",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}

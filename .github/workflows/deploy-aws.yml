@@ -13,6 +13,20 @@ permissions:
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ECR_API_REPOSITORY: ${{ secrets.AWS_ECR_API_REPOSITORY }}
+  AWS_ECR_WEB_REPOSITORY: ${{ secrets.AWS_ECR_WEB_REPOSITORY }}
+  AWS_ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
+  AWS_ECS_API_SERVICE: ${{ secrets.AWS_ECS_API_SERVICE }}
+  AWS_ECS_WEB_SERVICE: ${{ secrets.AWS_ECS_WEB_SERVICE }}
+  AWS_ECS_EXECUTION_ROLE: ${{ secrets.AWS_ECS_EXECUTION_ROLE }}
+  AWS_ECS_TASK_ROLE: ${{ secrets.AWS_ECS_TASK_ROLE }}
+  AWS_SECRETS_MANAGER_DATABASE_URL_ARN: ${{ secrets.AWS_SECRETS_MANAGER_DATABASE_URL_ARN }}
+  AWS_SECRETS_MANAGER_REDIS_URL_ARN: ${{ secrets.AWS_SECRETS_MANAGER_REDIS_URL_ARN }}
+  AWS_SECRETS_MANAGER_JWT_SECRET_ARN: ${{ secrets.AWS_SECRETS_MANAGER_JWT_SECRET_ARN }}
+  WEB_PUBLIC_API_URL: ${{ secrets.WEB_PUBLIC_API_URL }}
+  AWS_ECS_API_TASK_DEF: infra/aws/ecs/api-task-definition.json
+  AWS_ECS_WEB_TASK_DEF: infra/aws/ecs/web-task-definition.json
 
 jobs:
   deploy:
@@ -39,10 +53,72 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
 
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          API_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_API_REPOSITORY:$IMAGE_TAG"
+          docker build -f apps/api/Dockerfile -t "$API_IMAGE" .
+          docker push "$API_IMAGE"
+          echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Build and push Web image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          WEB_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_WEB_REPOSITORY:$IMAGE_TAG"
+          docker build -f apps/web/Dockerfile -t "$WEB_IMAGE" .
+          docker push "$WEB_IMAGE"
+          echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Render API task definition
+        run: |
+          jq \
+            --arg image "$API_IMAGE" \
+            --arg account "$AWS_ACCOUNT_ID" \
+            --arg region "$AWS_REGION" \
+            --arg execution_role "$AWS_ECS_EXECUTION_ROLE" \
+            --arg task_role "$AWS_ECS_TASK_ROLE" \
+            --arg database_url_arn "$AWS_SECRETS_MANAGER_DATABASE_URL_ARN" \
+            --arg redis_url_arn "$AWS_SECRETS_MANAGER_REDIS_URL_ARN" \
+            --arg jwt_secret_arn "$AWS_SECRETS_MANAGER_JWT_SECRET_ARN" \
+            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options.awslogs-region = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].secrets[0].valueFrom = $database_url_arn | .containerDefinitions[0].secrets[1].valueFrom = $redis_url_arn | .containerDefinitions[0].secrets[2].valueFrom = $jwt_secret_arn | .family = "fieldops-api"' \
+            "$AWS_ECS_API_TASK_DEF" > /tmp/api-task-definition.json
+
+      - name: Render Web task definition
+        run: |
+          jq \
+            --arg image "$WEB_IMAGE" \
+            --arg account "$AWS_ACCOUNT_ID" \
+            --arg region "$AWS_REGION" \
+            --arg execution_role "$AWS_ECS_EXECUTION_ROLE" \
+            --arg task_role "$AWS_ECS_TASK_ROLE" \
+            --arg public_api_url "$WEB_PUBLIC_API_URL" \
+            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options.awslogs-region = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].environment[0].value = $public_api_url | .containerDefinitions[0].environment[1].value = $public_api_url | .family = "fieldops-web"' \
+            "$AWS_ECS_WEB_TASK_DEF" > /tmp/web-task-definition.json
+
+      - name: Register API task definition
+        id: api-task
+        run: |
+          API_TASK_ARN=$(aws ecs register-task-definition --cli-input-json file:///tmp/api-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task_arn=$API_TASK_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Register Web task definition
+        id: web-task
+        run: |
+          WEB_TASK_ARN=$(aws ecs register-task-definition --cli-input-json file:///tmp/web-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task_arn=$WEB_TASK_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Update API service
+        run: |
+          aws ecs update-service --cluster "$AWS_ECS_CLUSTER" --service "$AWS_ECS_API_SERVICE" --task-definition "${{ steps.api-task.outputs.task_arn }}" --force-new-deployment
+
+      - name: Update Web service
+        run: |
+          aws ecs update-service --cluster "$AWS_ECS_CLUSTER" --service "$AWS_ECS_WEB_SERVICE" --task-definition "${{ steps.web-task.outputs.task_arn }}" --force-new-deployment
+
       - name: Validate AWS caller identity
         run: aws sts get-caller-identity
-
-      - name: Deploy placeholder
-        run: |
-          echo "Add your deploy commands here (ECS/App Runner/CloudFormation/CDK)."
-          echo "Required secret keys: AWS_ROLE_TO_ASSUME and AWS_REGION."

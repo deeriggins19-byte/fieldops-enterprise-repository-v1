@@ -15,3 +15,29 @@ jobs:
       - run: npm run check --if-present
       - run: npm run build
       - run: npm test
+
+  auth-lockout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Start API
+        run: |
+          npm run dev:api > /tmp/fieldops-api.log 2>&1 &
+          echo $! > /tmp/fieldops-api.pid
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3001/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready"
+          cat /tmp/fieldops-api.log
+          exit 1
+      - run: npm run test:auth-lockout

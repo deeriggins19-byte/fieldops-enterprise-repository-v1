@@ -1,0 +1,40 @@
+{
+  "family": "fieldops-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<ECS_EXECUTION_ROLE>",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<ECS_TASK_ROLE>",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/<AWS_ECR_API_REPOSITORY>:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3001,
+          "hostPort": 3001,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "API_PORT", "value": "3001" },
+        { "name": "JWT_EXPIRES_IN", "value": "12h" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "<AWS_SECRETS_MANAGER_DATABASE_URL_ARN>" },
+        { "name": "REDIS_URL", "valueFrom": "<AWS_SECRETS_MANAGER_REDIS_URL_ARN>" },
+        { "name": "JWT_SECRET", "valueFrom": "<AWS_SECRETS_MANAGER_JWT_SECRET_ARN>" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/fieldops/api",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}

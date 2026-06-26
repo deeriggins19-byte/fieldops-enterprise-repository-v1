@@ -17,7 +17,7 @@
 
 ## Platform and Operations
 
-- [ ] Branch protection enabled and required checks configured
+- [x] Branch protection enabled and required checks configured (`build`, `auth-lockout`)
 - [x] Fallback PR policy in place when private-repo branch protection is unavailable
 - [ ] Backup schedule defined for production database
 - [ ] Restore drill executed and documented
