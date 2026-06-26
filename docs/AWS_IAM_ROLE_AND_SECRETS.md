@@ -1,6 +1,7 @@
 # AWS IAM Role and Secrets
 
 Use this guide to finish the AWS deploy setup for [.github/workflows/deploy-aws.yml](../.github/workflows/deploy-aws.yml).
+For CLI-based provisioning commands, see [docs/AWS_BOOTSTRAP.md](AWS_BOOTSTRAP.md).
 
 ## 1. GitHub OIDC trust policy
 
