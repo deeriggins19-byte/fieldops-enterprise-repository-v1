@@ -31,6 +31,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ secrets.AWS_REGION != '' && secrets.AWS_ROLE_TO_ASSUME != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,6 +53,9 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+
+      - name: Validate AWS caller identity
+        run: aws sts get-caller-identity
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -120,5 +124,10 @@ jobs:
         run: |
           aws ecs update-service --cluster "$AWS_ECS_CLUSTER" --service "$AWS_ECS_WEB_SERVICE" --task-definition "${{ steps.web-task.outputs.task_arn }}" --force-new-deployment
 
-      - name: Validate AWS caller identity
-        run: aws sts get-caller-identity
+      - name: Wait for API service to stabilize
+        run: |
+          aws ecs wait services-stable --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_API_SERVICE"
+
+      - name: Wait for Web service to stabilize
+        run: |
+          aws ecs wait services-stable --cluster "$AWS_ECS_CLUSTER" --services "$AWS_ECS_WEB_SERVICE"
