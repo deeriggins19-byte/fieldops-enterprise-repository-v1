@@ -157,7 +157,7 @@ jobs:
       - name: Smoke check API startup log
         run: |
           START_MS=$((($(date +%s) - 1200) * 1000))
-          STARTED_COUNT=$(aws logs filter-log-events --log-group-name /fieldops/api --start-time "$START_MS" --filter-pattern '"Nest application successfully started"' --query 'length(events)' --output text)
+          STARTED_COUNT=$(aws logs filter-log-events --log-group-name /fieldops/api --start-time "$START_MS" --filter-pattern '"Nest application successfully started"' --query 'length(events)' --output text | tr '\t' '\n' | awk '{s+=$1} END{print s+0}')
           [ "$STARTED_COUNT" -ge 1 ] || (echo "API startup marker not found in recent logs" && exit 1)
 
       - name: Validate AWS caller identity
