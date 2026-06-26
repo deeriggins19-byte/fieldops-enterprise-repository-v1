@@ -138,3 +138,19 @@ Set these in the repository settings:
 ## 8. Final check
 
 Run the workflow manually from GitHub Actions once the secrets and resources exist.
+
+## Optional: deploy the full ECS service stack
+
+If you want one CloudFormation deployment for the application services as well, use [infra/aws/cloudformation/ecs-service.yml](../infra/aws/cloudformation/ecs-service.yml) after creating your VPC and public subnets.
+
+Required parameters:
+
+- `ClusterName`
+- `ApiRepositoryUri`
+- `WebRepositoryUri`
+- `VpcId`
+- `PublicSubnetIds`
+- `ApiSecretsDatabaseUrlArn`
+- `ApiSecretsRedisUrlArn`
+- `ApiSecretsJwtSecretArn`
+- `WebPublicApiUrl`
