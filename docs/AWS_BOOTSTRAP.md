@@ -143,6 +143,8 @@ Run the workflow manually from GitHub Actions once the secrets and resources exi
 
 If you want one CloudFormation deployment for the application services as well, use [infra/aws/cloudformation/ecs-service.yml](../infra/aws/cloudformation/ecs-service.yml) after creating your VPC and public subnets.
 
+For a complete step-by-step deploy flow, see [docs/AWS_CLOUDFORMATION_DEPLOY.md](AWS_CLOUDFORMATION_DEPLOY.md).
+
 Required parameters:
 
 - `ClusterName`
