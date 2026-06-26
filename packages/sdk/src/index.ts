@@ -1,0 +1,1 @@
+export class FieldOpsClient{constructor(private apiUrl:string,private token?:string){}async request(path:string,options:RequestInit={}){return fetch(`${this.apiUrl}${path}`,{...options,headers:{'Content-Type':'application/json',...(this.token?{Authorization:`Bearer ${this.token}`}:{})}}).then(r=>r.json())}health(){return this.request('/health')}}

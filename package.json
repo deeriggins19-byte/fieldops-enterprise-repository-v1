@@ -1,0 +1,28 @@
+{
+  "name": "fieldops-enterprise",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "node scripts/dev-api.js",
+    "dev:web": "node scripts/dev-web.js",
+    "dev:core": "node scripts/dev-core.js",
+    "dev:ready": "node scripts/dev-ready.js",
+    "dev:stop": "node scripts/dev-stop.js",
+    "build": "npm run build --workspaces --if-present",
+    "test": "node tests/smoke.js",
+    "test:auth-lockout": "node tests/auth-lockout.js",
+    "smoke:dev": "node scripts/dev-smoke.js",
+    "docker:up": "docker compose -f infra/docker/docker-compose.local.yml up -d",
+    "docker:down": "docker compose -f infra/docker/docker-compose.local.yml down",
+    "db:generate": "npm --workspace @fieldops/api run prisma:generate",
+    "db:migrate": "npm --workspace @fieldops/api run prisma:migrate",
+    "seed": "node scripts/seed.js",
+    "check": "node scripts/check-repo.js"
+  }
+}

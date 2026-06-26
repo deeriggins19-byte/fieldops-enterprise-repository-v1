@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  DISPATCHER
+  TECHNICIAN
+  CUSTOMER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  DELAY_RISK
+  COMPLETE
+  ARCHIVED
+}
+
+enum AssetStatus {
+  PENDING
+  IN_PROGRESS
+  INSTALLED
+  ISSUE
+  VERIFIED
+}
+
+enum WorkOrderStatus {
+  NEW
+  ASSIGNED
+  DISPATCHED
+  ON_SITE
+  COMPLETE
+  QA
+  CLOSED
+  CANCELLED
+}
+
+enum ScanEventType {
+  INSTALL_START
+  INSTALL_COMPLETE
+  ISSUE_FOUND
+  QUALITY_CHECK
+  MATERIAL_USED
+}
+
+model Tenant {
+  id         String      @id @default(cuid())
+  name       String
+  plan       String      @default("pilot")
+  users      User[]
+  projects   Project[]
+  assets     Asset[]
+  workOrders WorkOrder[]
+  aiLogs     AiInteraction[]
+  auditLogs  AuditLog[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model User {
+  id           String      @id @default(cuid())
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  email        String      @unique
+  passwordHash String
+  fullName     String
+  role         Role        @default(TECHNICIAN)
+  active       Boolean     @default(true)
+  scans        ScanEvent[]
+  laborLogs    LaborLog[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id])
+  name           String
+  customerName   String?
+  status         ProjectStatus @default(ACTIVE)
+  estimatedHours Float         @default(0)
+  assets         Asset[]
+  workOrders     WorkOrder[]
+  scans          ScanEvent[]
+  forecasts      Forecast[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Asset {
+  id         String      @id @default(cuid())
+  tenantId   String
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  projectId  String?
+  project    Project?    @relation(fields: [projectId], references: [id])
+  code       String
+  name       String
+  category   String
+  status     AssetStatus @default(PENDING)
+  scans      ScanEvent[]
+  laborLogs  LaborLog[]
+  workOrders WorkOrder[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model WorkOrder {
+  id          String          @id @default(cuid())
+  tenantId    String
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  projectId   String?
+  project     Project?        @relation(fields: [projectId], references: [id])
+  assetId     String?
+  asset       Asset?          @relation(fields: [assetId], references: [id])
+  title       String
+  description String?
+  priority    String          @default("NORMAL")
+  status      WorkOrderStatus @default(NEW)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ScanEvent {
+  id        String        @id @default(cuid())
+  tenantId  String
+  projectId String?
+  project   Project?      @relation(fields: [projectId], references: [id])
+  assetId   String
+  asset     Asset         @relation(fields: [assetId], references: [id])
+  workerId  String
+  worker    User          @relation(fields: [workerId], references: [id])
+  type      ScanEventType
+  notes     String?
+  createdAt DateTime      @default(now())
+}
+
+model LaborLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  workerId  String
+  worker    User     @relation(fields: [workerId], references: [id])
+  assetId   String?
+  asset     Asset?   @relation(fields: [assetId], references: [id])
+  startedAt DateTime
+  endedAt   DateTime?
+  hours     Float?
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id           String @id @default(cuid())
+  tenantId     String
+  sku          String
+  name         String
+  quantity     Float  @default(0)
+  unit         String @default("each")
+  reorderPoint Float  @default(0)
+
+  @@unique([tenantId, sku])
+}
+
+model Forecast {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  projectId           String
+  project             Project  @relation(fields: [projectId], references: [id])
+  projectedTotalHours Float
+  confidence          Float
+  delayRisk           String
+  recommendations     Json
+  createdAt           DateTime @default(now())
+}
+
+model AiInteraction {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String?
+  type      String
+  prompt    String
+  response  String
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  createdAt DateTime @default(now())
+}

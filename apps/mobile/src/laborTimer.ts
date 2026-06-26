@@ -1,0 +1,1 @@
+export class LaborTimer{private startedAt?:Date;start(){this.startedAt=new Date();return this.startedAt}stop(){if(!this.startedAt)throw new Error('Timer not started');const endedAt=new Date();const hours=(endedAt.getTime()-this.startedAt.getTime())/3600000;const result={startedAt:this.startedAt,endedAt,hours};this.startedAt=undefined;return result}}
