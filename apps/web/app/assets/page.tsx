@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
 import Link from 'next/link';
 import { AppShell } from '../../components/AppShell';
 import { useI18n } from '../../components/I18nProvider';
@@ -12,7 +11,6 @@ export default function Page() {
 	const { t } = useI18n();
 	const [rows, setRows] = useState<any[]>([]);
 	const [oshaRules, setOshaRules] = useState<any[]>([]);
-	const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
 	const [selectedRuleByAsset, setSelectedRuleByAsset] = useState<Record<string, string>>({});
 
 	const [code, setCode] = useState('PNL-001');
@@ -81,26 +79,6 @@ export default function Page() {
 		load();
 	}, []);
 
-	useEffect(() => {
-		let cancelled = false;
-		async function buildQrCodes() {
-			const entries = await Promise.all(
-				rows.map(async (row) => [row.id, await QRCode.toDataURL(row.qrCodeValue || row.code, { errorCorrectionLevel: 'M', margin: 1, width: 160 })] as const)
-			);
-			if (!cancelled) setQrCodes(Object.fromEntries(entries));
-		}
-
-		if (rows.length) {
-			buildQrCodes();
-		} else {
-			setQrCodes({});
-		}
-
-		return () => {
-			cancelled = true;
-		};
-	}, [rows]);
-
 	return (
 		<AppShell>
 			<h1>{t('assets.title')}</h1>
@@ -167,7 +145,10 @@ export default function Page() {
 				renderExtra={(row) => (
 					<div>
 						<div className='qr-card'>
-							{qrCodes[row.id] ? <img src={qrCodes[row.id]} alt={row.code || row.name || 'QR'} /> : null}
+							<img
+								src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(row.qrCodeValue || row.code || row.id || '')}`}
+								alt={row.code || row.name || 'QR'}
+							/>
 							<div>
 								<p className='qr-label'>QR</p>
 								<p>{row.qrCodeValue || row.code}</p>
