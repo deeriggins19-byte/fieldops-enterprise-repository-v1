@@ -18,6 +18,22 @@ jobs:
 
   auth-lockout:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fieldops
+          POSTGRES_PASSWORD: fieldops
+          POSTGRES_DB: fieldops
+        options: >-
+          --health-cmd="pg_isready -U fieldops -d fieldops"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: ${{ format('{0}://{1}:{2}@127.0.0.1:5432/{3}', 'postgresql', 'fieldops', 'fieldops', 'fieldops') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +42,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - run: npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
       - name: Start API
         run: |
           npm run dev:api > /tmp/fieldops-api.log 2>&1 &
