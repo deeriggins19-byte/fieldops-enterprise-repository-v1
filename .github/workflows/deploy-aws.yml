@@ -29,7 +29,27 @@ env:
   AWS_ECS_WEB_TASK_DEF: infra/aws/ecs/web-task-definition.json
 
 jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check required AWS secrets
+        id: check
+        env:
+          REGION: ${{ secrets.AWS_REGION }}
+          ROLE: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        run: |
+          if [ -n "$REGION" ] && [ -n "$ROLE" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::AWS secrets (AWS_REGION, AWS_ROLE_TO_ASSUME) are not configured. Skipping deployment."
+          fi
+
   deploy:
+    needs: check-secrets
+    if: needs.check-secrets.outputs.configured == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
