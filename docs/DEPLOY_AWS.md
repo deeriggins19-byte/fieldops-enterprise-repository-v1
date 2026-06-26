@@ -1,6 +1,7 @@
 # AWS Deploy Guide
 
 This repository uses an ECS Fargate deployment workflow in [.github/workflows/deploy-aws.yml](../.github/workflows/deploy-aws.yml).
+See [docs/AWS_IAM_ROLE_AND_SECRETS.md](AWS_IAM_ROLE_AND_SECRETS.md) for the exact IAM role, policy, and secret setup.
 
 ## Required GitHub secrets
 
