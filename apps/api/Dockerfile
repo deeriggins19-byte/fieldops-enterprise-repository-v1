@@ -18,6 +18,7 @@ RUN npm --workspace @fieldops/api run prisma:generate
 FROM node:20-bullseye-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/apps/api/package.json ./package.json
 COPY --from=build /repo/apps/api/dist ./dist
