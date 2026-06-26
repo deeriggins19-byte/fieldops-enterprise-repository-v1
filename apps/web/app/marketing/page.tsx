@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { AppShell } from '../../components/AppShell';
 import { useI18n } from '../../components/I18nProvider';
-import LeadForm from './lead-form';
 
 const proofPoints = [
 	'Centralized projects, assets, work orders, and scan logs',
@@ -208,7 +207,6 @@ export default function MarketingPage() {
 				</div>
 			</section>
 
-			<LeadForm />
 		</AppShell>
 	);
 }
