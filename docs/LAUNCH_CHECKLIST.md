@@ -18,10 +18,14 @@
 ## Platform and Operations
 
 - [ ] Branch protection enabled and required checks configured
+- [x] Fallback PR policy in place when private-repo branch protection is unavailable
 - [ ] Backup schedule defined for production database
 - [ ] Restore drill executed and documented
 - [ ] Health check monitors configured for API and web endpoints
 - [ ] Alerting configured for API 5xx and auth failure spikes
+
+Note: GitHub returned 403 for branch protection on this private repository due to plan limits.
+Use `docs/BRANCH_POLICY_FALLBACK.md` until branch protection can be enabled.
 
 ## Go Live Validation
 

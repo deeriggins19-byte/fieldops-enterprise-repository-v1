@@ -71,4 +71,5 @@ For current dependency security status and remediation guidance, see [docs/SECUR
 
 - [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md) - operational go-live checklist.
 - [docs/RISK_ACCEPTANCE_TEMPLATE.md](docs/RISK_ACCEPTANCE_TEMPLATE.md) - residual risk sign-off template.
+- [docs/BRANCH_POLICY_FALLBACK.md](docs/BRANCH_POLICY_FALLBACK.md) - PR policy fallback when branch protection is unavailable.
 - [.env.production.example](.env.production.example) - production environment variable template.
