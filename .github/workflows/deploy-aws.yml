@@ -85,7 +85,7 @@ jobs:
             --arg database_url_arn "$AWS_SECRETS_MANAGER_DATABASE_URL_ARN" \
             --arg redis_url_arn "$AWS_SECRETS_MANAGER_REDIS_URL_ARN" \
             --arg jwt_secret_arn "$AWS_SECRETS_MANAGER_JWT_SECRET_ARN" \
-            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options.awslogs-region = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].secrets[0].valueFrom = $database_url_arn | .containerDefinitions[0].secrets[1].valueFrom = $redis_url_arn | .containerDefinitions[0].secrets[2].valueFrom = $jwt_secret_arn | .family = "fieldops-api"' \
+            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options."awslogs-region" = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].secrets[0].valueFrom = $database_url_arn | .containerDefinitions[0].secrets[1].valueFrom = $redis_url_arn | .containerDefinitions[0].secrets[2].valueFrom = $jwt_secret_arn | .family = "fieldops-api"' \
             "$AWS_ECS_API_TASK_DEF" > /tmp/api-task-definition.json
 
       - name: Render Web task definition
@@ -97,7 +97,7 @@ jobs:
             --arg execution_role "$AWS_ECS_EXECUTION_ROLE" \
             --arg task_role "$AWS_ECS_TASK_ROLE" \
             --arg public_api_url "$WEB_PUBLIC_API_URL" \
-            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options.awslogs-region = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].environment[0].value = $public_api_url | .containerDefinitions[0].environment[1].value = $public_api_url | .family = "fieldops-web"' \
+            '.containerDefinitions[0].image = $image | .containerDefinitions[0].logConfiguration.options."awslogs-region" = $region | .executionRoleArn = $execution_role | .taskRoleArn = $task_role | .containerDefinitions[0].environment[0].value = $public_api_url | .containerDefinitions[0].environment[1].value = $public_api_url | .family = "fieldops-web"' \
             "$AWS_ECS_WEB_TASK_DEF" > /tmp/web-task-definition.json
 
       - name: Register API task definition
